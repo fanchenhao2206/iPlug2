@@ -1561,6 +1561,25 @@ public:
     {
       DrawTrack(g, mTrackBounds.Get()[ch], ch);
     }
+
+    if (mStyle.drawFrame && mDrawStepFrame) 
+    {
+      // Draw frames for all steps
+      for (int step = 0; step < mNSteps; step++)
+      {
+        g.DrawRect(GetColor(kFR), mStepBounds.Get()[step], 
+          &mBlend, mStyle.frameThickness);
+      }
+    }
+    if (mStyle.drawFrame && mDrawTrackFrame)
+    {
+      // Draw frames for all tracks
+      for (int ch = 0; ch < nVals; ch++)
+      {
+        g.DrawRect(GetColor(kFR), mTrackBounds.Get()[ch], 
+          &mBlend, mStyle.frameThickness);
+      }
+    }
   }
   
   /** Update the parameters based on a parameter group name.
@@ -1764,9 +1783,6 @@ protected:
       
       DrawPeak(g, peakRect, chIdx, trackPos > mBaseValue);
     }
-
-    if(mStyle.drawFrame && mDrawTrackFrame)
-      g.DrawRect(GetColor(kFR), r, &mBlend, mStyle.frameThickness);
   }
 
   virtual void DrawTrackBackground(IGraphics& g, const IRECT& r, int chIdx)
@@ -1859,6 +1875,7 @@ protected:
   int mMouseOverTrack = -1;
   double mBaseValue = 0.; // 0-1 value to represent the mid-point, i.e. for displaying bipolar data
   bool mDrawTrackFrame = true;
+  bool mDrawStepFrame = true;
   bool mZeroValueStepHasBounds = true; // If this is true, there is a separate step for zero, when mNSteps > 0
 };
 

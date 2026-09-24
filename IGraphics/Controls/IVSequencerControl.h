@@ -20,9 +20,7 @@
 BEGIN_IPLUG_NAMESPACE
 BEGIN_IGRAPHICS_NAMESPACE
 
-/** A vectorial multi-slider control
- * @ingroup IControls */
-template <int MAXNC = 1>
+template <int MAXNC = 1, int MAXNR = 1>
 class IVSequencerControl : public IVTrackControlBase
 {
 public:
@@ -34,10 +32,9 @@ public:
    * @param bounds The control's bounds
    * @param label The label for the vector control, leave empty for no label
    * @param style The styling of this vector control \see IVStyle
-   * @param nSteps The number of cross-axis steps for integer quantized grids
    * @param direction The direction of the sliders */
   IVSequencerControl(const IRECT& bounds, const char* label, const IVStyle& style = DEFAULT_STYLE, int nSteps = 0, EDirection dir = EDirection::Vertical)
-  : IVTrackControlBase(bounds, label, style, MAXNC, nSteps, dir)
+  : IVTrackControlBase(bounds, label, style, MAXNC, MAXNR, dir)
   {
     mDrawTrackFrame = false;
     mTrackPadding = 1.f;
@@ -48,29 +45,14 @@ public:
    * @param label The label for the vector control, leave empty for no label
    * @param style The styling of this vector control \see IVStyle
    * @param loParamIdx The parameter index for the first slider in the multislider. The total number of sliders/parameters covered depends on the template argument, and is contiguous from loParamIdx
-   * @param nSteps The number of cross-axis steps for integer quantized grids
    * @param direction The direction of the sliders */
   IVSequencerControl(const IRECT& bounds, const char* label, const IVStyle& style, int loParamIdx, int nSteps, EDirection dir)
-  : IVTrackControlBase(bounds, label, style, loParamIdx, MAXNC, nSteps, dir)
+  : IVTrackControlBase(bounds, label, style, loParamIdx, MAXNC, MAXNR, dir)
   {
     mDrawTrackFrame = false;
     mTrackPadding = 1.f;
   }
-  
-  /** Constructs a vector multi slider control that is linked to a list of parameters that need not be sequential
-   * @param bounds The control's bounds
-   * @param label The label for the vector control, leave empty for no label
-   * @param style The styling of this vector control \see IVStyle
-   * @param params List of parameter indexes, the length of which should match the template argument
-   * @param nSteps The number of cross-axis steps for integer quantized grids
-   * @param direction The direction of the sliders */
-  IVSequencerControl(const IRECT& bounds, const char* label, const IVStyle& style, const std::initializer_list<int>& params, int nSteps, EDirection dir)
-  : IVTrackControlBase(bounds, label, style, params, nSteps, dir)
-  {
-    mDrawTrackFrame = false;
-    mTrackPadding = 1.f;
-  }
-  
+
   void Draw(IGraphics& g) override
   {
     DrawBackground(g, mRECT);
@@ -81,148 +63,53 @@ public:
       g.DrawRect(GetColor(kFR), mWidgetBounds, &mBlend, mStyle.frameThickness);
   }
 
-  void SnapToMouse(float x, float y, EDirection direction, const IRECT& bounds, int valIdx = -1 /* TODO:: not used*/, double minClip = 0., double maxClip = 1.) override
-  {
-    bounds.Constrain(x, y);
-    int nVals = NVals();
-
-    double value = 0.;
-    int sliderTest = -1;
-    
-    int step = GetStepIdxForPos(x, y);
-        
-    if(direction == EDirection::Vertical)
-    {
-      if(step > -1)
-      {
-        y = mStepBounds.Get()[step].T;
-        
-        if(mStepBounds.GetSize() == 1)
-          value = 1.f;
-        else
-          value = step * (1.f/float(mStepBounds.GetSize()-1));
-      }
-      else
-      {
-        value = 1.f - (y-bounds.T) / bounds.H();
-      }
-      
-      for(auto i = 0; i < nVals; i++)
-      {
-        if(mTrackBounds.Get()[i].ContainsEdge(x, mTrackBounds.Get()[i].MH()))
-        {
-          sliderTest = i;
-          break;
-        }
-      }
-    }
-    else
-    {
-      if(step > -1)
-      {
-        x = mStepBounds.Get()[step].L;
-        
-        if(mStepBounds.GetSize() == 1)
-          value = 1.f;
-        else
-          value = 1.- (step * (1.f/float(mStepBounds.GetSize()-1)));
-      }
-      else
-      {
-        value = (x-bounds.L) / bounds.W();
-      }
-      for(auto i = 0; i < nVals; i++)
-      {
-        if(mTrackBounds.Get()[i].ContainsEdge(mTrackBounds.Get()[i].MW(), y))
-        {
-          sliderTest = i;
-          break;
-        }
-      }
-    }
-        
-    if(!GetStepped())
-       value = std::round(value / mGrain) * mGrain;
-    
-    if (sliderTest > -1)
-    {
-      SetValue(Clip(value, 0., 1.), sliderTest);
-      OnNewValue(sliderTest, GetValue(sliderTest));
-
-      mSliderHit = sliderTest;
-      mMouseOverTrack = mSliderHit;
-      
-      if (!GetStepped() && mPrevSliderHit != -1) // LERP disabled when stepped
-      {
-        if (abs(mPrevSliderHit - mSliderHit) > 1 /*|| shiftClicked*/)
-        {
-          int lowBounds, highBounds;
-
-          if (mPrevSliderHit < mSliderHit)
-          {
-            lowBounds = mPrevSliderHit;
-            highBounds = mSliderHit;
-          }
-          else
-          {
-            lowBounds = mSliderHit;
-            highBounds = mPrevSliderHit;
-          }
-
-          for (auto i = lowBounds; i < highBounds; i++)
-          {
-            double frac = (double)(i - lowBounds) / double(highBounds-lowBounds);
-            SetValue(iplug::Lerp(GetValue(lowBounds), GetValue(highBounds), frac), i);
-            OnNewValue(i, GetValue(i));
-          }
-        }
-      }
-      mPrevSliderHit = mSliderHit;
-    }
-    else
-    {
-      mSliderHit = -1;
-    }
-
-    SetDirty(true); // will send all param vals to delegate
-  }
-
+  /** Implement this method to respond to a mouse down event on this control. 
+   * @param x The X coordinate of the mouse event
+   * @param y The Y coordinate of the mouse event
+   * @param mod A struct indicating which modifier keys are held for the event */
   void OnMouseDown(float x, float y, const IMouseMod& mod) override
   {
-    // This allows single clicking to remove a step entry when !mZeroValueStepHasBounds
-    if(GetStepped() && !mZeroValueStepHasBounds && mPrevSliderHit != -1)
-    {
-      int ch = GetValIdxForPos(x, y);
-      
-      if(ch > -1)
-      {
-        int step = GetStepIdxForPos(x, y);
-        
-        if(step > -1)
-        {
-          float y = mStepBounds.Get()[step].T;
-          double valueAtStep = 1.f - (y-mWidgetBounds.T) / mWidgetBounds.H();
+    // User has clicked the coordinate (x,y) of the whole screen, which must be within the bounds 
+    // of this control; else why are we here?
 
-          if(GetValue(ch) == valueAtStep)
-          {
-            SetValue(0., ch);
-            OnNewValue(ch, 0.);
-            SetDirty(true);
-            return;
-          }
-        }
-      }
-    }
+    // TODO: First, get cell of this control corresponding to given (x,y); guaranteed to return a 
+    // cell, because this control is all cells, a grid of cells.
 
-    if (!mod.S)
-      mPrevSliderHit = -1;
-      
-    SnapToMouse(x, y, mDirection, mWidgetBounds);
+    // TODO: Modify control based on given (x,y) that mouse clicked on; e.g., if was on, turn off, 
+    // was off, turn on.
+
   }
 
+  /** Implement this method to respond to a mouse drag event on this control. 
+   * @param x The X coordinate of the mouse event
+   * @param y The Y coordinate of the mouse event
+   * @param dX The X delta (difference) since the last event
+   * @param dY The Y delta (difference) since the last event
+   * @param mod A struct indicating which modifier keys are held for the event */
   void OnMouseDrag(float x, float y, float dX, float dY, const IMouseMod& mod) override
   {
-    SnapToMouse(x, y, mDirection, mWidgetBounds);
+    // User has dragged their mouse over to the coordinate (x,y). This is interesting; what should 
+    // be done to the cell corresponding to this coordinate? One idea, is to remember what caused 
+    // this drag event to happen in the first place. In other words, what was the MouseDown event?
+
+    // If the mouse down event was on a cell that was originally off (and so afterwards turned on), 
+    // then perhaps the user is interested in turning on all cells they afterwards drag their mouse 
+    // across. Otherwise, if they only wanted to turn on the initial cell, then they would click it, 
+    // and let go; not continue to hold their mouse down and drag across to other cells too! 
+
+    // TODO: Remember the initial mouse down event---call it prevMouseDown or something like that---
+    // which can be either:
+    //
+    // (i) true, when the initial cell was originally off, and so afterwards turned on by the mouse 
+    // click, so that as the mouse is dragged past that initial mouse click, every cell it touches 
+    // also turns on. Keep in mind, if the mouse is clicked on and then just held down on the initial
+    // cell, then technically the initial cell is just repeatedly turned on; this works!
+    // 
+    // (ii) false, when the initial cell was originally on, and so afterwards turned off by the mouse
+    // click, so that as the mouse is dragged past that initial mouse click, every cell it touches
+    // also turns off. Keep in mind, if the mouse is clicked on and then just held down on the initial
+    // cell, then technically the initial cell is just repeatedly turned off; this works!
+
   }
 
   void OnMsgFromDelegate(int msgTag, int dataSize, const void* pData) override

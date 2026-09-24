@@ -1,9 +1,7 @@
 /*
  ==============================================================================
 
- This file is part of the iPlug 2 library. Copyright (C) the iPlug 2 developers.
-
- See LICENSE.txt for  more info.
+ This file is by Tim Fan <fanchenhao2206@icloud.com>
 
  ==============================================================================
 */
@@ -20,46 +18,40 @@
 BEGIN_IPLUG_NAMESPACE
 BEGIN_IGRAPHICS_NAMESPACE
 
-template <int MAXNC = 1, int MAXNR = 1>
+template <int MAXNC = 16, int MAXNR = 12>
 class IVSequencerControl : public IVTrackControlBase
 {
 public:
   using OnNewValueFunc = std::function<void(int trackIdx, double val)>;
-
-  static constexpr int kMsgTagSetHighlight = 0;
   
   /** Constructs a vector multi slider control that is not linked to parameters
    * @param bounds The control's bounds
    * @param label The label for the vector control, leave empty for no label
    * @param style The styling of this vector control \see IVStyle
    * @param direction The direction of the sliders */
-  IVSequencerControl(const IRECT& bounds, const char* label, const IVStyle& style = DEFAULT_STYLE, int nSteps = 0, EDirection dir = EDirection::Vertical)
-  : IVTrackControlBase(bounds, label, style, MAXNC, MAXNR, dir)
+  IVSequencerControl(const IRECT& bounds, const char* label, const IVStyle& style = DEFAULT_STYLE, EDirection dir = EDirection::Vertical)
+  : IVTrackControlBase(bounds, label, style, 
+      MAXNC /* maxNTracks */, MAXNR /* nSteps */, dir)
   {
-    mDrawTrackFrame = false;
-    mTrackPadding = 1.f;
-  }
-
-  /** Constructs a vector multi slider control that is linked to sequential parameters
-   * @param bounds The control's bounds
-   * @param label The label for the vector control, leave empty for no label
-   * @param style The styling of this vector control \see IVStyle
-   * @param loParamIdx The parameter index for the first slider in the multislider. The total number of sliders/parameters covered depends on the template argument, and is contiguous from loParamIdx
-   * @param direction The direction of the sliders */
-  IVSequencerControl(const IRECT& bounds, const char* label, const IVStyle& style, int loParamIdx, int nSteps, EDirection dir)
-  : IVTrackControlBase(bounds, label, style, loParamIdx, MAXNC, MAXNR, dir)
-  {
-    mDrawTrackFrame = false;
+    mDrawTrackFrame = true;
+    mDrawStepFrame = true;
     mTrackPadding = 1.f;
   }
 
   void Draw(IGraphics& g) override
   {
+    // Fill the whole rect with background (aka transparent)
     DrawBackground(g, mRECT);
+
+    // Draw the widget; calls DrawTrack for each of the nVals tracks,
+    // set by SetNVals(maxNTracks) in this child of IVTrackControlBase. 
+    // Tracks, are the columns. And each track can have an integer number 
+    // of steps, if desired. If left at zero, dragging the slider up and 
+    // down moves the value of this track between 0 and 1.
     DrawWidget(g);
-    DrawLabel(g);
     
     if(mStyle.drawFrame)
+      // Draw a frame around the widget
       g.DrawRect(GetColor(kFR), mWidgetBounds, &mBlend, mStyle.frameThickness);
   }
 
@@ -69,13 +61,14 @@ public:
    * @param mod A struct indicating which modifier keys are held for the event */
   void OnMouseDown(float x, float y, const IMouseMod& mod) override
   {
+    // 2206: so simple!
     // User has clicked the coordinate (x,y) of the whole screen, which must be within the bounds 
     // of this control; else why are we here?
 
-    // TODO: First, get cell of this control corresponding to given (x,y); guaranteed to return a 
+    // First, get cell of this control corresponding to given (x,y); guaranteed to return a 
     // cell, because this control is all cells, a grid of cells.
 
-    // TODO: Modify control based on given (x,y) that mouse clicked on; e.g., if was on, turn off, 
+    // Modify control based on given (x,y) that mouse clicked on; e.g., if was on, turn off, 
     // was off, turn on.
 
   }
@@ -88,6 +81,7 @@ public:
    * @param mod A struct indicating which modifier keys are held for the event */
   void OnMouseDrag(float x, float y, float dX, float dY, const IMouseMod& mod) override
   {
+    // 2206: so simple!
     // User has dragged their mouse over to the coordinate (x,y). This is interesting; what should 
     // be done to the cell corresponding to this coordinate? One idea, is to remember what caused 
     // this drag event to happen in the first place. In other words, what was the MouseDown event?
@@ -97,7 +91,7 @@ public:
     // across. Otherwise, if they only wanted to turn on the initial cell, then they would click it, 
     // and let go; not continue to hold their mouse down and drag across to other cells too! 
 
-    // TODO: Remember the initial mouse down event---call it prevMouseDown or something like that---
+    // Remember the initial mouse down event---call it prevMouseDown or something like that---
     // which can be either:
     //
     // (i) true, when the initial cell was originally off, and so afterwards turned on by the mouse 
@@ -112,14 +106,6 @@ public:
 
   }
 
-  void OnMsgFromDelegate(int msgTag, int dataSize, const void* pData) override
-  {
-    if (!IsDisabled() && msgTag == kMsgTagSetHighlight && dataSize == sizeof(int))
-    {
-      SetHighlightedTrack(*reinterpret_cast<const int*>(pData));
-    }
-  }
-
   /** override to do something when an individual slider is dragged */
   virtual void OnNewValue(int trackIdx, double val)
   {
@@ -131,17 +117,9 @@ public:
   {
     mOnNewValueFunc = func;
   }
-  
-  int GetLastSliderHit() const
-  {
-    return mSliderHit;
-  }
-  
+
 protected:
   OnNewValueFunc mOnNewValueFunc = nullptr;
-  int mPrevSliderHit = -1;
-  int mSliderHit = -1;
-  double mGrain = 0.001;
 };
 
 END_IGRAPHICS_NAMESPACE

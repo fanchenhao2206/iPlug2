@@ -51,7 +51,7 @@ public:
 
       // Fill in the cell at column i, and row given by cell
       g.FillRect(COLOR_BLACK, IRECT::MakeXYWH(
-        mRECT.L + (i * colSpacing), mRECT.B - ((cell + 1) * rowSpacing),
+        mRECT.L + (i * colSpacing), mRECT.B - (cell * rowSpacing),
         colSpacing, rowSpacing));
     }
 

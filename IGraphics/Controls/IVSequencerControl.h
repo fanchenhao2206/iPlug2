@@ -11,28 +11,72 @@
 #pragma once
 
 #include "IControl.h"
+#include <array>
 
 BEGIN_IPLUG_NAMESPACE
 BEGIN_IGRAPHICS_NAMESPACE
 
+template <int NROW, int NCOL>
 class IVSequencerControl : public IControl
 {
 public:
-  using OnNewValueFunc = std::function<void(int trackIdx, double val)>;
-
-  IVSequencerControl(const IRECT& bounds)
-  : IControl(bounds)
-  {}
+  IVSequencerControl(const IRECT& bounds, int paramIdx = kNoParameter, 
+    bool show = true, std::function<void()> updateFn = nullptr)
+  : IControl(bounds, paramIdx), mUpdateFn(updateFn)
+  {
+    Hide(!show);
+    mCells[0] = 4;
+    mCells[4] = 2;
+  }
   
   void Draw(IGraphics& g) override
   {
-    g.DrawRect(COLOR_BLACK, mRECT);
     g.FillRect(COLOR_WHITE, mRECT);
+    g.DrawRect(COLOR_BLACK, mRECT, 0, 4.f);
+
+    // sketch:
+    char str[64];
+    sprintf(str, "nCol: %d \t nRow: %d", NCOL, NROW);
+    g.DrawText(DEFAULT_TEXT, str, mRECT);
+
+    // Draw grid: nRow by nCol cells
+    float rowSpacing = mRECT.H() / NROW;
+    float colSpacing = mRECT.W() / NCOL;
+
+    // Fill in selected cells
+    assert(mCells.size() == NCOL);
+    for (int i = 0; i < NCOL; i++) {
+      int cell = mCells[i];
+      if (!cell) continue;
+
+      // Fill in the cell at column i, and row given by cell
+      g.FillRect(COLOR_BLACK, IRECT::MakeXYWH(
+        mRECT.L + (i * colSpacing), mRECT.B - ((cell + 1) * rowSpacing),
+        colSpacing, rowSpacing));
+    }
+
+    // Draw dividing lines
+    for (int i = 1; i <= NROW-1; i++) {
+      // Draw nRow-1 horizontal lines
+      float y = mRECT.T + (i * rowSpacing);
+
+      // Make it easier to track which note
+      float thickness = (i % 4 == 0) ? 4.f : 1.f; 
+      g.DrawLine(COLOR_BLACK, mRECT.L, y, mRECT.R, y, 0, thickness);
+    }
+    for (int i = 1; i <= NCOL-1; i++) {
+      // Draw nCol-1 vertical lines
+      float x = mRECT.L + (i * colSpacing);
+
+      // Emphasize the bar lines
+      float thickness = (i % 4 == 0) ? 4.f : 1.f; 
+      g.DrawLine(COLOR_BLACK, x, mRECT.B, x, mRECT.T, 0, thickness);
+    }
   }
 
   void OnMouseDown(float x, float y, const IMouseMod& mod) override
   {
-    /* 2206: */
+    /* 2206: OnMouseDown */
     // User has clicked the coordinate (x,y) of the whole screen, which must be 
     // within the bounds of this control; else why are we here?
 
@@ -45,7 +89,7 @@ public:
 
   void OnMouseDrag(float x, float y, float dX, float dY, const IMouseMod& mod) override
   {
-    /* 2206: */
+    /* 2206: OnMouseDrag */
     // User has dragged their mouse over to the coordinate (x,y). This is 
     // interesting; what should be done to the cell corresponding to this 
     // coordinate? One idea, is to remember what caused this drag event to 
@@ -77,19 +121,16 @@ public:
   }
 
   /* .cpp files that extend me (e.g. IMidiSequencer) can override this */
-  virtual void OnNewValue(int trackIdx, double val)
+  virtual void OnNewValue()
   {
-    if(mOnNewValueFunc)
-      mOnNewValueFunc(trackIdx, val);
-  }
-  
-  void SetOnNewValueFunc(OnNewValueFunc func)
-  {
-    mOnNewValueFunc = func;
+    if(mUpdateFn)
+      mUpdateFn();
   }
   
 protected:
-  OnNewValueFunc mOnNewValueFunc = nullptr;
+  std::function<void()> mUpdateFn;
+private:
+  std::array<int, NCOL> mCells;
 };
 
 END_IGRAPHICS_NAMESPACE

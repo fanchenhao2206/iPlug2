@@ -65,7 +65,7 @@ public:
   static const IColor DEFAULT_FR_COLOR;
   static const IColor DEFAULT_HK_COLOR;
 
-  IVKeyboardControl(const IRECT& bounds, int paramIdx = kNoParameter, bool show = true, 
+  IVKeyboardControl(const IRECT& bounds, int paramIdx = kNoParameter, 
                     int minNote = 48, int maxNote = 72, bool roundedKeys = false,
                     const IColor& WK_COLOR = DEFAULT_WK_COLOR,
                     const IColor& BK_COLOR = DEFAULT_BK_COLOR,
@@ -80,7 +80,6 @@ public:
   , mHK_COLOR(HK_COLOR)
   , mRoundedKeys(roundedKeys)
   {
-    Hide(!show);
     mText.mFGColor = FR_COLOR;
     mDblAsSingleClick = true;
     bool keepWidth = !(bounds.W() <= 0.0);

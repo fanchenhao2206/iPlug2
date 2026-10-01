@@ -21,10 +21,9 @@ class IVSequencerControl : public IControl
 {
 public:
   IVSequencerControl(const IRECT& bounds, int paramIdx = kNoParameter, 
-    bool show = true, std::function<void()> updateFn = nullptr)
+    std::function<void()> updateFn = nullptr)
   : IControl(bounds, paramIdx), mUpdateFn(updateFn)
   {
-    Hide(!show);
     mCells[0] = 4;
     mCells[4] = 2;
   }

@@ -24,6 +24,7 @@ public:
     std::function<void()> updateFn = nullptr)
   : IControl(bounds, paramIdx), mUpdateFn(updateFn)
   {
+    // 2206: remove this; user will draw in what cells are set
     mCells[0] = 4;
     mCells[4] = 2;
   }

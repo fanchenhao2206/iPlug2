@@ -24,11 +24,7 @@ public:
     std::function<void()> updateFn = nullptr)
   : IControl(bounds, paramIdx), mUpdateFn(updateFn)
   {
-    // 2206: remove this; user will draw in what cells are set
-    mCells[0] = 4;
-    mCells[4] = 2;
-    mX = mY = 0;
-    mCol = mRow = 0;
+    mPrevCol = mPrevRow = 0;
     mIgnoreMouse = false;
   }
   
@@ -37,12 +33,9 @@ public:
     g.FillRect(COLOR_WHITE, mRECT);
     g.DrawRect(COLOR_BLACK, mRECT, 0, 4.f);
 
-    // sketch:
-    char str[64];
-    // sprintf(str, "nCol: %d \t nRow: %d", NCOL, NROW);
-    // sprintf(str, "x: %f \t y: %f", mX, mY);
-    sprintf(str, "col: %d \t row: %d", mCol, mRow);
-    g.DrawText(DEFAULT_TEXT, str, mRECT);
+    // // sketch:
+    // char str[64];
+    // g.DrawText(DEFAULT_TEXT, str, mRECT);
 
     // Draw grid: nRow by nCol cells
     float rowSpacing = mRECT.H() / NROW;
@@ -56,7 +49,7 @@ public:
 
       // Fill in the cell at column i, and row given by cell
       g.FillRect(COLOR_BLACK, IRECT::MakeXYWH(
-        mRECT.L + (i * colSpacing), mRECT.B - (cell * rowSpacing),
+        mRECT.L + (i * colSpacing), mRECT.T + (cell * rowSpacing),
         colSpacing, rowSpacing));
     }
 
@@ -81,16 +74,6 @@ public:
 
   void OnMouseDown(float x, float y, const IMouseMod& mod) override
   {
-    /* 2206: OnMouseDown */
-    // User has clicked the coordinate (x,y) of the whole screen, which must be 
-    // within the bounds of this control; else why are we here?
-
-    // First, get cell of this control corresponding to given (x,y); guaranteed 
-    // to return a cell, because this control is all cells, a grid of cells.
-
-    // Modify control based on given (x,y) that mouse clicked on; e.g., if was 
-    // on, turn off, was off, turn on.
-
     // Mouse needs to be in-bounds to edit the sequencer
     if (!mRECT.Contains(x, y)) return;
 
@@ -106,45 +89,25 @@ public:
     float colIdx = (int)(relX / rowSpacing);
     float rowIdx = (int)(relY / colSpacing);
 
-    // So, turn it on!
-    mCells[colIdx] = NROW - rowIdx;
+    // So, turn it on! Or, off it is already on
+    if (mCells[colIdx] == rowIdx) {
+      // We clicked on (row,col), but that is already on; so turn off
+      mCells[colIdx] = 0;
+    } else {
+      // We clicked on (row,col), which is not already on, so turn it on
+      mCells[colIdx] = rowIdx;
+    }
 
     // And re-draw control
     SetDirty(true);
+
+    // Used by OnMouseDrag to know what mode it is in
+    mPrevCol = colIdx;
+    mPrevRow = rowIdx;
   }
 
   void OnMouseDrag(float x, float y, float dX, float dY, const IMouseMod& mod) override
   {
-    /* 2206: OnMouseDrag */
-    // User has dragged their mouse over to the coordinate (x,y). This is 
-    // interesting; what should be done to the cell corresponding to this 
-    // coordinate? One idea, is to remember what caused this drag event to 
-    // happen in the first place. In other words, what was the MouseDown event?
-
-    // If the mouse down event was on a cell that was originally off (and so 
-    // afterwards turned on), then perhaps the user is interested in turning on 
-    // all cells they afterwards drag their mouse across. Otherwise, if they 
-    // only wanted to turn on the initial cell, then they would click it, and 
-    // let go; not continue to hold their mouse down and drag across to other 
-    // cells too! 
-
-    // Remember the initial mouse down event---call it prevMouseDown or 
-    // something like that---which can be either:
-    //
-    // (i) true, when the initial cell was originally off, and so afterwards 
-    // turned on by the mouse click, so that as the mouse is dragged past that 
-    // initial mouse click, every cell it touches also turns on. Keep in mind, 
-    // if the mouse is clicked on and then just held down on the initial cell, 
-    // then technically the initial cell is just repeatedly turned on; this 
-    // works!
-    // 
-    // (ii) false, when the initial cell was originally on, and so afterwards 
-    // turned off by the mouse click, so that as the mouse is dragged past that 
-    // initial mouse click, every cell it touches also turns off. Keep in mind, 
-    // if the mouse is clicked on and then just held down on the initial cell, 
-    // then technically the initial cell is just repeatedly turned off; this 
-    // works!
-
     // Mouse needs to be in-bounds to edit the sequencer
     if (!mRECT.Contains(x, y)) return;
 
@@ -160,8 +123,17 @@ public:
     float colIdx = (int)(relX / rowSpacing);
     float rowIdx = (int)(relY / colSpacing);
 
-    // So, turn it on!
-    mCells[colIdx] = NROW - rowIdx;
+    // So, turn it on! Or, off, depending on mPrevCol/Row
+    if (mCells[mPrevCol]) {
+      // User turned ON the cell they clicked, so lets turn ON this cell too
+      mCells[colIdx] = rowIdx;
+    } else {
+      // User turned OFF the cell they clicked, so lets turn OFF this cell too
+      if (mCells[colIdx] == rowIdx) {
+        // As long as it was previously on...
+        mCells[colIdx] = 0;
+      }
+    }
 
     // And re-draw control
     SetDirty(true);
@@ -178,8 +150,7 @@ protected:
   std::function<void()> mUpdateFn;
 private:
   std::array<int, NCOL> mCells;
-  float mX, mY;
-  int mCol, mRow;
+  int mPrevCol, mPrevRow;
 };
 
 END_IGRAPHICS_NAMESPACE

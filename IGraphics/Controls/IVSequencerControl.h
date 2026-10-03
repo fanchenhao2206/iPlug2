@@ -1,12 +1,11 @@
-/*
- ==============================================================================
-
- This file is part of the iPlug 2 library. Copyright (C) the iPlug 2 developers.
-
- See LICENSE.txt for  more info.
-
- ==============================================================================
-*/
+/**
+ * IVSequencerControl.h by Tim Fan <fanchenhao2206@icloud.com>
+ * 
+ * A simple step sequencer whose number of rows and columns are passed 
+ * as template parameters, and is edited using mouse clicks and drags; 
+ * TODO: on each edit, send MIDI message to DSP to audition new note;
+ * this should be done through the provided updateFn, i think is plan
+ */
 
 #pragma once
 
@@ -25,6 +24,7 @@ public:
   : IControl(bounds, paramIdx), mUpdateFn(updateFn)
   {
     mPrevCol = mPrevRow = 0;
+    mColIdx = mRowIdx = 0;
     mIgnoreMouse = false;
   }
   
@@ -33,9 +33,10 @@ public:
     g.FillRect(COLOR_WHITE, mRECT);
     g.DrawRect(COLOR_BLACK, mRECT, 0, 4.f);
 
-    // // sketch:
-    // char str[64];
-    // g.DrawText(DEFAULT_TEXT, str, mRECT);
+    // sketch:
+    char str[64];
+    sprintf(str, "col: %d, row: %d", mColIdx, mRowIdx);
+    g.DrawText(DEFAULT_TEXT, str, mRECT);
 
     // Draw grid: nRow by nCol cells
     float rowSpacing = mRECT.H() / NROW;
@@ -45,7 +46,7 @@ public:
     assert(mCells.size() == NCOL);
     for (int i = 0; i < NCOL; i++) {
       int cell = mCells[i];
-      if (!cell) continue;
+      if (cell < 0) continue;
 
       // Fill in the cell at column i, and row given by cell
       g.FillRect(COLOR_BLACK, IRECT::MakeXYWH(
@@ -86,13 +87,15 @@ public:
     float rowSpacing = mRECT.H() / NROW;
     float colSpacing = mRECT.W() / NCOL;
 
-    float colIdx = (int)(relX / rowSpacing);
-    float rowIdx = (int)(relY / colSpacing);
+    float colIdx = (int)(relX / colSpacing);
+    float rowIdx = (int)(relY / rowSpacing);
+    mColIdx = colIdx;
+    mRowIdx = rowIdx;
 
     // So, turn it on! Or, off it is already on
     if (mCells[colIdx] == rowIdx) {
       // We clicked on (row,col), but that is already on; so turn off
-      mCells[colIdx] = 0;
+      mCells[colIdx] = -1;
     } else {
       // We clicked on (row,col), which is not already on, so turn it on
       mCells[colIdx] = rowIdx;
@@ -120,18 +123,20 @@ public:
     float rowSpacing = mRECT.H() / NROW;
     float colSpacing = mRECT.W() / NCOL;
 
-    float colIdx = (int)(relX / rowSpacing);
-    float rowIdx = (int)(relY / colSpacing);
+    float colIdx = (int)(relX / colSpacing);
+    float rowIdx = (int)(relY / rowSpacing);
+    mColIdx = colIdx;
+    mRowIdx = rowIdx;
 
     // So, turn it on! Or, off, depending on mPrevCol/Row
-    if (mCells[mPrevCol]) {
+    if (mCells[mPrevCol] > -1) {
       // User turned ON the cell they clicked, so lets turn ON this cell too
       mCells[colIdx] = rowIdx;
     } else {
       // User turned OFF the cell they clicked, so lets turn OFF this cell too
       if (mCells[colIdx] == rowIdx) {
         // As long as it was previously on...
-        mCells[colIdx] = 0;
+        mCells[colIdx] = -1;
       }
     }
 
@@ -151,6 +156,7 @@ protected:
 private:
   std::array<int, NCOL> mCells;
   int mPrevCol, mPrevRow;
+  int mColIdx, mRowIdx;
 };
 
 END_IGRAPHICS_NAMESPACE

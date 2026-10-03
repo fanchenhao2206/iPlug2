@@ -27,6 +27,9 @@ public:
     // 2206: remove this; user will draw in what cells are set
     mCells[0] = 4;
     mCells[4] = 2;
+    mX = mY = 0;
+    mCol = mRow = 0;
+    mIgnoreMouse = false;
   }
   
   void Draw(IGraphics& g) override
@@ -36,7 +39,9 @@ public:
 
     // sketch:
     char str[64];
-    sprintf(str, "nCol: %d \t nRow: %d", NCOL, NROW);
+    // sprintf(str, "nCol: %d \t nRow: %d", NCOL, NROW);
+    // sprintf(str, "x: %f \t y: %f", mX, mY);
+    sprintf(str, "col: %d \t row: %d", mCol, mRow);
     g.DrawText(DEFAULT_TEXT, str, mRECT);
 
     // Draw grid: nRow by nCol cells
@@ -85,6 +90,27 @@ public:
 
     // Modify control based on given (x,y) that mouse clicked on; e.g., if was 
     // on, turn off, was off, turn on.
+
+    // Mouse needs to be in-bounds to edit the sequencer
+    if (!mRECT.Contains(x, y)) return;
+
+    // (x,y) are given as absolute coordinates; now that we know it 
+    // is a point within mRECT, let's find its relative coordinates
+    float relX = x - mRECT.L;
+    float relY = y - mRECT.T;
+
+    // Then, it's easy to find which grid this point belongs in
+    float rowSpacing = mRECT.H() / NROW;
+    float colSpacing = mRECT.W() / NCOL;
+
+    float colIdx = (int)(relX / rowSpacing);
+    float rowIdx = (int)(relY / colSpacing);
+
+    // So, turn it on!
+    mCells[colIdx] = NROW - rowIdx;
+
+    // And re-draw control
+    SetDirty(true);
   }
 
   void OnMouseDrag(float x, float y, float dX, float dY, const IMouseMod& mod) override
@@ -118,6 +144,27 @@ public:
     // if the mouse is clicked on and then just held down on the initial cell, 
     // then technically the initial cell is just repeatedly turned off; this 
     // works!
+
+    // Mouse needs to be in-bounds to edit the sequencer
+    if (!mRECT.Contains(x, y)) return;
+
+    // (x,y) are given as absolute coordinates; now that we know it 
+    // is a point within mRECT, let's find its relative coordinates
+    float relX = x - mRECT.L;
+    float relY = y - mRECT.T;
+
+    // Then, it's easy to find which grid this point belongs in
+    float rowSpacing = mRECT.H() / NROW;
+    float colSpacing = mRECT.W() / NCOL;
+
+    float colIdx = (int)(relX / rowSpacing);
+    float rowIdx = (int)(relY / colSpacing);
+
+    // So, turn it on!
+    mCells[colIdx] = NROW - rowIdx;
+
+    // And re-draw control
+    SetDirty(true);
   }
 
   /* .cpp files that extend me (e.g. IMidiSequencer) can override this */
@@ -131,6 +178,8 @@ protected:
   std::function<void()> mUpdateFn;
 private:
   std::array<int, NCOL> mCells;
+  float mX, mY;
+  int mCol, mRow;
 };
 
 END_IGRAPHICS_NAMESPACE

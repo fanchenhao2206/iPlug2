@@ -233,8 +233,8 @@ public:
     }
   }
 
-  virtual void OnNewValue(int trackIdx, double val) // This is the og virtual fn
-                                                    // .cpp files can override .h
+  /** override to do something when an individual slider is dragged */
+  virtual void OnNewValue(int trackIdx, double val)
   {
     if(mOnNewValueFunc)
       mOnNewValueFunc(trackIdx, val);

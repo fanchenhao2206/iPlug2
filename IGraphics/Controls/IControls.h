@@ -28,7 +28,6 @@
 #include "IVScopeControl.h"
 #include "IVMultiSliderControl.h"
 #include "IVDisplayControl.h"
-#include "IVSequencerControl.h"
 
 BEGIN_IPLUG_NAMESPACE
 BEGIN_IGRAPHICS_NAMESPACE

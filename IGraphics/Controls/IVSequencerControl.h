@@ -23,7 +23,7 @@ public:
     std::function<void()> updateFn = nullptr)
   : IControl(bounds, paramIdx), mUpdateFn(updateFn)
   {
-    mPrevCol = mPrevRow = 0;
+    mClickCol = mClickRow = 0;
     mColIdx = mRowIdx = 0;
     mIgnoreMouse = false;
   }
@@ -105,8 +105,8 @@ public:
     SetDirty(true);
 
     // Used by OnMouseDrag to know what mode it is in
-    mPrevCol = colIdx;
-    mPrevRow = rowIdx;
+    mClickCol = colIdx;
+    mClickRow = rowIdx;
   }
 
   void OnMouseDrag(float x, float y, float dX, float dY, const IMouseMod& mod) override
@@ -128,8 +128,8 @@ public:
     mColIdx = colIdx;
     mRowIdx = rowIdx;
 
-    // So, turn it on! Or, off, depending on mPrevCol/Row
-    if (mCells[mPrevCol] > -1) {
+    // So, turn it on! Or, off, depending on mClickCol/Row
+    if (mCells[mClickCol] > -1) {
       // User turned ON the cell they clicked, so lets turn ON this cell too
       mCells[colIdx] = rowIdx;
     } else {
@@ -155,7 +155,7 @@ protected:
   std::function<void()> mUpdateFn;
 private:
   std::array<int, NCOL> mCells;
-  int mPrevCol, mPrevRow;
+  int mClickCol, mClickRow;
   int mColIdx, mRowIdx;
 };
 

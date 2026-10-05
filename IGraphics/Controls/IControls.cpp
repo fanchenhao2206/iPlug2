@@ -110,7 +110,7 @@ IVSwitchControl::IVSwitchControl(const IRECT& bounds, IActionFunction aF, const 
 void IVSwitchControl::Draw(IGraphics& g)
 {
   DrawBackground(g, mRECT);
-  DrawLabel(g);
+  // DrawLabel(g);
   DrawWidget(g);
   DrawValue(g, false);
 }

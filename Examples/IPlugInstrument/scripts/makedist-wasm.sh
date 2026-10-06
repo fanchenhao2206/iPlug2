@@ -254,3 +254,6 @@ else
   echo ""
   echo "Not launching browser (use 'on' argument to launch)"
 fi
+
+cp ../scripts/server.py .
+python3 server.py

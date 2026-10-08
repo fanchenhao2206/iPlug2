@@ -1412,6 +1412,8 @@ public:
     
     return kNoTag;
   }
+
+  std::unordered_map<int, IControl*> GetControlTags() { return mCtrlTags; }
   
   /** Get the first control with a parameter index that matches paramIdx
    * @param idx The paramater index of the control to get

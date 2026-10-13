@@ -28,6 +28,9 @@
 #include "IPlugQueue.h"
 #include "ControlRamp.h"
 
+#include "Oscillator.h"
+#include "ADSREnvelope.h"
+
 BEGIN_IPLUG_NAMESPACE
 
 /** A generic synthesizer voice to be controlled by a voice allocator. */
@@ -54,6 +57,8 @@ using VoiceInputs = ControlRamp::RampArray<kNumVoiceControlRamps>;
 class SynthVoice
 {
 public:
+
+  SynthVoice() : mAMPEnv("gain", [&](){ mOSC.Reset(); }) {}
 
   virtual ~SynthVoice() {};
 
@@ -100,6 +105,10 @@ public:
    * @param value The normalized value
    */
   virtual void SetControl(int controlNumber, float value) {};
+
+public:
+  FastSinOscillator<sample> mOSC; // TODO: make just Oscillator
+  ADSREnvelope<sample> mAMPEnv;
 
 protected:
   VoiceInputs mInputs;

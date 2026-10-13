@@ -58,7 +58,7 @@ class SynthVoice
 {
 public:
 
-  SynthVoice() : mAMPEnv("gain", [&](){ mOSC.Reset(); }) {}
+  SynthVoice() : mAMPEnv("gain", [&](){ mOSC->Reset(); }) {}
 
   virtual ~SynthVoice() {};
 
@@ -107,7 +107,7 @@ public:
   virtual void SetControl(int controlNumber, float value) {};
 
 public:
-  FastSinOscillator<sample> mOSC; // TODO: make just Oscillator
+  IOscillator<sample> *mOSC;
   ADSREnvelope<sample> mAMPEnv;
 
 protected:

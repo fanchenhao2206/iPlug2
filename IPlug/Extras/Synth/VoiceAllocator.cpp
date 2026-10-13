@@ -194,31 +194,25 @@ void VoiceAllocator::ProcessEvents(int blockSize, int64_t sampleTime)
   while(mInputQueue.ElementsAvailable())
   {
     VoiceInputEvent event;
-    mInputQueue.Pop(event); // event.mAddress already contains the correct "voice address"
-    // TODO:
-    // But, how is event added to this queue? What calls mInputQueue.Add(event)?
-    // VoiceAllocator::AddEvent(VoiceInputEvent e), which is called by
-    // mVoiceAllocator.AddEvent(MidiMessageToEvent(msg)), in MidiSynth::ProcessBlock,
-    // which is responsible for emptying the mMidiQueue of MIDI messages; convert the
-    // IMidiMsgs to VoiceInputEvents, and add that to mInputQueue retained by VoiceAllocator,
-    // so that when we pop from mInputQueue here, we see the original MIDI message processed
-    // by MidiSynth::ProcessBlock...
-    //
-    // But, who fills in mMidiQueue with MIDI messages... That's the only key remaining!!
+    mInputQueue.Pop(event);
+    // MIDI controller (internal or external) generates MIDI messages. They are converted
+    // to VoiceInputEvents; fair enough, instruments shouldn't have to only use MIDI...
     // 
-    // Well, it's done by picoDAWDSP::ProcessMidiMsg(msg), which calls mSynth.AddMidiMsgToQueue(msg), 
-    // so mMidiQueue contains MIDI messages, passed into that picoDAWDSP::ProcessMidiMsg call...
-    // But what messages are passed into that call?? 
-    //
-    // Well, for example, IVSequencerControl produces MIDI messages that are then delivered to
-    // delegate through SendMidiMsgFromUI(my_msg), WHICH IS what results in our
-    // picoDAWDSP::ProcessMidiMsg(my_msg) being called; this is abstracted away, and so assumed...
-    //
-    // So, it's the job of the IVSequencerControl to produce MIDI messages that contain the 
-    // right informations so that they can be routed to the right instrument DSP's, and so on...
+    // This conversion needs to preserve all that is relevant in the MIDI message. 
+    // Most importantly, at this stage of understanding, is the channel ID of MIDI message;
+    // which MIDI channel does the sender want this MIDI message to be delivered through...
     // 
-    // They can do so by calling midiMsg.SetChannel(channelIdx), which sets the lower 4 bits of 
-    // the MIDI message's status field to the desired channel index; up to 16 channels total
+    // Specifically, that is specified in the lower 4 bits of the MIDI messsage's status field
+    // (Recall, up to 16 total MIDI channels...) This means it's the controller's job to 
+    // fill in those bits in the MIDI message's status field correctly, so that the converter
+    // can convert it into a VoiceInputEvent correctly too.
+    //
+    // The creation of a MIDI message happens through the IMidiMsg struct of IPlugMidi.h
+    // The conversion happens in MidiSynth::MidiMessageToEventBasic; a MidiSynth instance
+    // deals with the queue of MIDI messages delivered from clients, and converts them to
+    // VoiceInputEvents to then deliver to the relevant voices; the actual oscillators!!
+    //
+    // We are here now, processing those VoiceInputEvents...  
     VoiceAllocator::VoiceBitsArray voices = VoicesMatchingAddress(event.mAddress);
 
     switch(event.mAction)

@@ -237,12 +237,6 @@ struct IMidiMsg
   {
     return mStatus & 0x0F;
   }
-
-  void SetChannel(int channel)
-  {
-    channel = channel & 0x0F; // Only care about lower 4 bits (up to 16 channels)
-    mStatus = mStatus | channel; // And make that the lower 4 bits of mStatus
-  }
   
   /** Gets the MIDI Status message
    * @return EStatusMsg */

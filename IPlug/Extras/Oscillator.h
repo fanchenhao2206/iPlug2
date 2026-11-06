@@ -54,6 +54,30 @@ protected:
 };
 
 template <typename T>
+class SawOscillator : public IOscillator<T>
+{
+public:
+  SawOscillator(double startPhase = 0., double startFreq = 1.)
+  : IOscillator<T>(startPhase, startFreq)
+  {}
+
+  inline T Process(double freqHz) override
+  {
+    IOscillator<T>::SetFreqCPS(freqHz);
+    T output = T(2.0 * IOscillator<T>::mPhase - 1.0);
+
+    IOscillator<T>::mPhase += IOscillator<T>::mPhaseIncr;
+
+    if (IOscillator<T>::mPhase >= 1.0)
+      IOscillator<T>::mPhase -= 1.0;
+    else if (IOscillator<T>::mPhase < 0.0)
+      IOscillator<T>::mPhase += 1.0;
+
+    return output;
+  }
+};
+
+template <typename T>
 class SinOscillator : public IOscillator<T>
 {
 public:
@@ -77,7 +101,8 @@ public:
 };
 
 /*
- FastSinOscillator - fast sinusoidal oscillator / table look up, based on an approach and code used by Miller Puckette in Pure Data, originally by Robert Höldrich
+ FastSinOscillator - fast sinusoidal oscillator / table look up, based on an 
+ approach and code used by Miller Puckette in Pure Data, originally by Robert Höldrich
 
  From some correspondence with M.S.P...
 
@@ -85,7 +110,8 @@ public:
  between -2^19 (-524288)  and +2^19 (+524288), and you want the fractional part as an
  integer, proceed as follows:
 
- Add 3*2^19 (1572864) to it.  The sum will be between 2^20 (1048576) and 2^21 (2097152) and so, in the usual
+ Add 3*2^19 (1572864) to it.  The sum will be between 2^20 (1048576) and 2^21 (2097152) 
+ and so, in the usual
  double precision format, the units bit will be the LSB of the higher-order
  32 bits, and the fractional part will be neatly represented as an unsigned
  fixed-point number between 0 and 2^32-1.

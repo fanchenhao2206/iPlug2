@@ -53,29 +53,61 @@ protected:
   double mStartPhase;
 };
 
+
 template <typename T>
-class SawOscillator : public IOscillator<T>
+class TriangleOscillator : public IOscillator<T>
 {
 public:
-  SawOscillator(double startPhase = 0., double startFreq = 1.)
-  : IOscillator<T>(startPhase, startFreq)
+  TriangleOscillator(double startPhase = 0.,
+                     double startFreq = 1.)
+    : IOscillator<T>(startPhase, startFreq)
   {}
+
+  inline T Process()
+  {
+    auto &phase = IOscillator<T>::mPhase;
+
+    phase += IOscillator<T>::mPhaseIncr;
+    phase -= std::floor(phase);
+
+    return T(1.0 - 4.0 * std::abs(phase - 0.5));
+  }
 
   inline T Process(double freqHz) override
   {
     IOscillator<T>::SetFreqCPS(freqHz);
-    T output = T(2.0 * IOscillator<T>::mPhase - 1.0);
-
-    IOscillator<T>::mPhase += IOscillator<T>::mPhaseIncr;
-
-    if (IOscillator<T>::mPhase >= 1.0)
-      IOscillator<T>::mPhase -= 1.0;
-    else if (IOscillator<T>::mPhase < 0.0)
-      IOscillator<T>::mPhase += 1.0;
-
-    return output;
+    return Process();
   }
 };
+
+
+
+template <typename T>
+class SawOscillator : public IOscillator<T>
+{
+public:
+  SawOscillator(double startPhase = 0.,
+                double startFreq = 1.)
+    : IOscillator<T>(startPhase, startFreq)
+  {}
+
+  inline T Process()
+  {
+    auto &phase = IOscillator<T>::mPhase;
+
+    phase += IOscillator<T>::mPhaseIncr;
+    phase -= std::floor(phase);
+
+    return T(2.0 * phase - 1.0);
+  }
+
+  inline T Process(double freqHz) override
+  {
+    IOscillator<T>::SetFreqCPS(freqHz);
+    return Process();
+  }
+};
+
 
 template <typename T>
 class SinOscillator : public IOscillator<T>

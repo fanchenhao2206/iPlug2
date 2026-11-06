@@ -154,6 +154,7 @@ public:
    * @return \c true if the synth is silent */
   bool ProcessBlock(sample** inputs, sample** outputs, int nInputs, int nOutputs, int nFrames);
 
+  VoiceAllocator mVoiceAllocator;
 private:
 
   // maintain the state for one MIDI channel including RPN receipt state and pitch bend range.
@@ -193,7 +194,6 @@ private:
   void HandleRPN(IMidiMsg msg);
 
   // basic MIDI data
-  VoiceAllocator mVoiceAllocator;
   uint16_t mUnisonVoices{1};
   IMidiQueue mMidiQueue;
   float mVelocityLUT[128];

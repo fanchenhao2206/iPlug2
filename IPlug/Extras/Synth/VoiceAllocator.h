@@ -117,6 +117,7 @@ public:
    @param pv Pointer to the voice to add.
    @param zone A zone can be specified to make multitimbral synths.*/
   void AddVoice(SynthVoice* pv, uint8_t zone);
+  // SynthVoice *GetVoice(int i);
 
   /** Add a single event to the input queue for the current processing block. */
   void AddEvent(VoiceInputEvent e) { mInputQueue.Push(e); }
@@ -166,7 +167,6 @@ private:
 
   IPlugQueue<VoiceInputEvent> mInputQueue{1024};
 
-  std::vector<SynthVoice*> mVoicePtrs;
   std::vector<std::unique_ptr<VoiceControlRamps>> mVoiceGlides;
   std::vector<int> mHeldKeys; // The currently physically held keys on the keyboard
   std::vector<int> mSustainedNotes; // Any notes that are sustained, including those that are physically held
@@ -188,6 +188,7 @@ private:
   float mMinHeldVelocity{1.f};
 
 public:
+  std::vector<SynthVoice*> mVoicePtrs;
   EPolyMode mPolyMode {kPolyModePoly};
   EATMode mATMode {kATModeChannel};
 };

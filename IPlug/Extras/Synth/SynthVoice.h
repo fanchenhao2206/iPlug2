@@ -62,7 +62,7 @@ public:
 
   virtual ~SynthVoice() {};
 
-  virtual void CycleSynthCore() {};
+  virtual void SetSynthCore(int coreIdx) {};
 
   /** @return true if voice is generating any audio. */
   virtual bool GetBusy() const = 0;

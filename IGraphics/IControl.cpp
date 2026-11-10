@@ -129,6 +129,16 @@ const IParam* IControl::GetParam(int valIdx) const
     return nullptr;
 }
 
+IParam* IControl::GetParam(int valIdx)
+{
+  int paramIdx = GetParamIdx(valIdx);
+  
+  if(paramIdx > kNoParameter)
+    return mDelegate->GetParam(paramIdx);
+  else
+    return nullptr;
+}
+
 int IControl::LinkedToParam(int paramIdx) const
 {
   const int nVals = NVals();

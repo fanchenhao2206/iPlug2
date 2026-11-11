@@ -112,7 +112,7 @@ public:
 public:
   IOscillator<sample> *mOSC;
   ADSREnvelope<sample> mAMPEnv;
-  // FilterEnvelope<sample> mFilterEnv; // Currently is for cutoff; TODO: can make it switch to resonance?
+  ADSREnvelope<sample> mFilterEnv; // Currently is for cutoff; TODO: can make it switch to resonance?
 
 protected:
   VoiceInputs mInputs;

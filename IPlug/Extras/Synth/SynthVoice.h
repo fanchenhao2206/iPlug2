@@ -64,9 +64,12 @@ public:
   virtual ~SynthVoice() {};
 
   virtual void SetSynthCore(int synthCoreIdx) {};
+  virtual void SetFilterCore(int filterCoreIdx) {};
+
   virtual void SetFilterType(int filterTypeIdx) {};
   virtual void SetFilterCutoff(double freq) {};
   virtual void SetFilterResonance(double percentage) {};
+
   virtual void SetOctave(int octave) {};
 
   /** @return true if voice is generating any audio. */

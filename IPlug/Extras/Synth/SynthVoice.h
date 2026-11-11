@@ -29,6 +29,7 @@
 #include "ControlRamp.h"
 
 #include "Oscillator.h"
+#include "Filter.h"
 #include "ADSREnvelope.h"
 
 BEGIN_IPLUG_NAMESPACE
@@ -111,6 +112,7 @@ public:
 
 public:
   IOscillator<sample> *mOSC;
+  IFilter<sample> *mFilter;
   ADSREnvelope<sample> mAMPEnv;
   ADSREnvelope<sample> mFilterEnv; // Currently is for cutoff; TODO: can make it switch to resonance?
 

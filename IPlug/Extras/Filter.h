@@ -31,13 +31,8 @@ public:
   virtual void Reset() {}
   virtual void SetFreqCPS(double freq) {}
   virtual void SetQ(double Q) {}
-  virtual void SetSampleRate(double sampleRate)
-  {
-    mSampleRate = sampleRate;
-  }
-
-protected:
-  double mSampleRate = 44100.;
+  virtual void SetMode(EMode mode) {}
+  virtual void SetSampleRate(double sampleRate) {}
 };
 
 #define SVFMODES_VALIST "LowPass", "HighPass", "BandPass", "Notch", "Peak", "Bell", "LowPassShelf", "HighPassShelf"
@@ -90,17 +85,29 @@ public:
     return magnitude;
   }
 
-  void SetFreqCPS(double freqCPS) { mNewState.freq = Clip(freqCPS, 10.0, 20000.); }
+  void SetFreqCPS(double freqCPS) override
+  {
+    mNewState.freq = Clip(freqCPS, 10.0, 20000.);
+  }
 
-  void SetQ(double Q) { mNewState.Q = Clip(Q, 0.1, 100.0); }
+  void SetQ(double Q) override
+  {
+    mNewState.Q = Clip(Q, 0.1, 100.0);
+  }
 
   void SetGain(double gainDB) { mNewState.gain = Clip(gainDB, -36.0, 36.0); }
 
-  void SetMode(EMode mode) { mNewState.mode = mode; }
-  
-  void SetSampleRate(double sampleRate) { mNewState.sampleRate = sampleRate; }
+  void SetMode(EMode mode) override
+  {
+    mNewState.mode = mode;
+  }
 
-  void ProcessBlock(T** inputs, T** outputs, int nChans, int nFrames)
+  void SetSampleRate(double sampleRate) override
+  {
+    mNewState.sampleRate = sampleRate;
+  }
+
+  void ProcessBlock(T** inputs, T** outputs, int nChans, int nFrames) override
   {
     assert(nChans <= NC);
 
@@ -126,7 +133,7 @@ public:
     }
   }
 
-  inline T Process(T input, int channel = 0)
+  inline T Process(T input, int channel = 0) override
   {
     assert(channel < NC);
 
@@ -145,7 +152,7 @@ public:
     return static_cast<T>(m_m0 * v0 + m_m1 * mV1[channel] + m_m2 * mV2[channel]);
   }
 
-  void Reset()
+  void Reset() override
   {
     for (auto c = 0; c < NC; c++)
     {

@@ -121,6 +121,25 @@ public:
     }
   }
 
+  inline T Process(T input, int channel = 0)
+  {
+    assert(channel < NC);
+
+    if (mState != mNewState)
+      UpdateCoefficients();
+
+    const double v0 = static_cast<double>(input);
+
+    mV3[channel] = v0 - mIc2eq[channel];
+    mV1[channel] = m_a1 * mIc1eq[channel] + m_a2 * mV3[channel];
+    mV2[channel] = mIc2eq[channel] + m_a2 * mIc1eq[channel] + m_a3 * mV3[channel];
+
+    mIc1eq[channel] = 2.0 * mV1[channel] - mIc1eq[channel];
+    mIc2eq[channel] = 2.0 * mV2[channel] - mIc2eq[channel];
+
+    return static_cast<T>(m_m0 * v0 + m_m1 * mV1[channel] + m_m2 * mV2[channel]);
+  }
+
   void Reset()
   {
     for (auto c = 0; c < NC; c++)

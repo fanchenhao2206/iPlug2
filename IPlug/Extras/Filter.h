@@ -30,6 +30,7 @@ public:
   virtual void ProcessBlock(T** inputs, T** outputs, int nChans, int nFrames) {}
   virtual void Reset() {}
   virtual void SetFreqCPS(double freq) {}
+  virtual void SetQ(double Q) {}
   virtual void SetSampleRate(double sampleRate)
   {
     mSampleRate = sampleRate;

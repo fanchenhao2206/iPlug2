@@ -63,6 +63,7 @@ public:
   virtual ~SynthVoice() {};
 
   virtual void SetSynthCore(int coreIdx) {};
+  virtual void SetOctave(int octave) {};
 
   /** @return true if voice is generating any audio. */
   virtual bool GetBusy() const = 0;
@@ -111,6 +112,7 @@ public:
 public:
   IOscillator<sample> *mOSC;
   ADSREnvelope<sample> mAMPEnv;
+  // FilterEnvelope<sample> mFilterEnv; // Currently is for cutoff; TODO: can make it switch to resonance?
 
 protected:
   VoiceInputs mInputs;

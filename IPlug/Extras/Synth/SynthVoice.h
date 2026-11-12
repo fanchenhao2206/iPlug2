@@ -65,6 +65,7 @@ public:
 
   virtual void SetSynthCore(int synthCoreIdx) {};
   virtual void SetFilterCore(int filterCoreIdx) {};
+  virtual void SetSynthCoreAntiAliasing(bool antiAliasing) {};
 
   virtual void SetFilterType(int filterTypeIdx) {};
   virtual void SetFilterCutoff(double freq) {};
